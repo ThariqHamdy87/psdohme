@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Login Kahim - Portal Himpunan Mahasiswa Elektro{% endblock %}
+{% block body_class %}login-page{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-card">
+
+        <!-- Header & Logo -->
+        <div class="login-header">
+            <div class="brand-badge">
+                <i class="fa-solid fa-bolt-lightning"></i>
+            </div>
+            <h1 class="login-title">HME <span>PORTAL</span></h1>
+            <p class="login-subtitle">Main Database Mahasiswa & Pengurus Elektro</p>
+        </div>
+
+        <!-- Login Form -->
+        <form action="{{ url_for('login') }}" method="POST" class="login-form" id="loginForm">
+            <div class="input-group">
+                <label for="username">Username</label>
+                <div class="input-field-wrap">
+                    <i class="fa-solid fa-user-shield field-icon"></i>
+                    <input type="text" id="username" name="username" placeholder="Masukkan username" required
+                        autocomplete="username" autofocus>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Password</label>
+                <div class="input-field-wrap">
+                    <i class="fa-solid fa-lock field-icon"></i>
+                    <input type="password" id="password" name="password" placeholder="Masukkan password" required
+                        autocomplete="current-password">
+                    <button type="button" class="btn-toggle-pwd" id="togglePassword" title="Lihat/Sembunyikan password">
+                        <i class="fa-regular fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login" id="btnLogin">
+                <span>Masuk ke Dashboard</span>
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+        </form>
+
+        <!-- Credentials Quick Hint Box -->
+        <div class="credentials-hint">
+            <div class="hint-header">
+                <i class="fa-solid fa-key"></i>
+                <span>Akses Login Default:</span>
+            </div>
+            <div class="hint-badges">
+                <div class="hint-pill" onclick="fillCredentials('kahim', 'HME')" title="Klik untuk mengisi otomatis">
+                    <span class="label">Username:</span>
+                    <code>kahim</code>
+                </div>
+                <div class="hint-pill" onclick="fillCredentials('kahim', 'HME')" title="Klik untuk mengisi otomatis">
+                    <span class="label">Password:</span>
+                    <code>HME</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Notice -->
+        <div class="login-footer">
+            <p>&copy; 2026 Himpunan Mahasiswa Elektro • Sistem Autentikasi Internal</p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function fillCredentials(u, p) {
+        document.getElementById('username').value = u;
+        document.getElementById('password').value = p;
+        document.getElementById('password').focus();
+    }
+</script>
+{% endblock %}

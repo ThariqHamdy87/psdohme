@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Utama - Main Database Pengurus HME{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <!-- Top Navigation Bar -->
+    <header class="dashboard-navbar">
+        <div class="nav-left">
+            <div class="nav-brand-logo">
+                <i class="fa-solid fa-bolt-lightning"></i>
+            </div>
+            <div class="nav-brand-text">
+                <h2>HME <span>PORTAL</span></h2>
+                <p>Main Database Pengurus & Anggota Biasa (AB)</p>
+            </div>
+        </div>
+
+        <div class="nav-right">
+            <div class="user-chip">
+                <div class="user-avatar">
+                    <i class="fa-solid fa-user-tie"></i>
+                </div>
+                <div class="user-meta">
+                    <span class="user-name">{{ user.nama }}</span>
+                    <span class="user-role-badge"><i class="fa-solid fa-circle"></i> Kahim Online</span>
+                </div>
+            </div>
+
+            <a href="{{ url_for('logout') }}" class="btn-logout" title="Keluar dari sistem">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="dashboard-main">
+        
+        <!-- Welcome Banner -->
+        <section class="welcome-card">
+            <div class="welcome-info">
+                <h1>Dashboard <span>SK Pengurus HME</span> 👋</h1>
+                <p>Silakan masukkan data Surat Keputusan (SK) Pengurus dari sisi depan (user), baik melalui <strong>Upload Berkas PDF SK</strong> maupun <strong>Input Formulir Pengurus</strong>. Sistem akan otomatis memetakan golongannya ke dalam Main Database.</p>
+            </div>
+            <div class="welcome-action">
+                <a href="{{ url_for('download_sample_sk') }}" class="btn btn-secondary" title="Unduh file PDF SK contoh untuk diuji coba upload">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Unduh Contoh PDF SK</span>
+                </a>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Input Pengurus Manual</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Section: Upload Berkas SK Pengurus Dari Depan (Frontend) -->
+        <section class="sk-upload-section">
+            <div class="sk-upload-card">
+                <div class="sk-upload-header">
+                    <div class="sk-badge-icon">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <div>
+                        <h3>Unggah Berkas SK Pengurus (PDF)</h3>
+                        <p>Unggah file PDF Surat Keputusan Pengurus yang memuat tabel Nama, NIM, dan Jabatan. Golongan akan ditentukan otomatis.</p>
+                    </div>
+                </div>
+
+                <form action="{{ url_for('upload_sk') }}" method="POST" enctype="multipart/form-data" class="sk-upload-form" id="skUploadForm">
+                    <div class="sk-form-inputs">
+                        <div class="sk-file-dropzone" id="skDropzone">
+                            <input type="file" name="sk_file" id="skFileInput" accept=".pdf,application/pdf" required style="display: none;">
+                            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+                            <div class="drop-text">
+                                <strong id="selectedFileName">Pilih atau Drag & Drop Berkas PDF SK Pengurus</strong>
+                                <span>Format file: .pdf (Contoh: SK_Pengurus_HME_2026.pdf)</span>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnBrowseSk">
+                                <i class="fa-solid fa-folder-open"></i> Cari Berkas
+                            </button>
+                        </div>
+
+                        <div class="sk-meta-input">
+                            <label for="customNoSk">Nomor SK Pengurus (Opsional)</label>
+                            <input 
+                                type="text" 
+                                name="custom_no_sk" 
+                                id="customNoSk" 
+                                placeholder="Contoh: SK-HME-2026/01 (atau otomatis dari PDF)"
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="sk-form-actions">
+                        <button type="submit" class="btn btn-primary" id="btnUploadSk">
+                            <i class="fa-solid fa-upload"></i>
+                            <span>Proses & Masukkan ke Main Database</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Stats Overview Cards (Metrik Golongan) -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon icon-blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Total Pengurus</span>
+                    <div class="stat-number">{{ total_anggota }}</div>
+                    <span class="stat-sub">Terdaftar di Main Database</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-rose">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Golongan I (Inti)</span>
+                    <div class="stat-number">{{ total_gol_1 }}</div>
+                    <span class="stat-sub">Kahim, Wakahim, BPH Inti</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-purple">
+                    <i class="fa-solid fa-sitemap"></i>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Golongan II (Kadiv)</span>
+                    <div class="stat-number">{{ total_gol_2 }}</div>
+                    <span class="stat-sub">Ketua Divisi & Koordinator</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-emerald">
+                    <i class="fa-solid fa-user-group"></i>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Gol. III & IV (Staf/AB)</span>
+                    <div class="stat-number">{{ total_gol_3 + total_gol_4 }}</div>
+                    <span class="stat-sub">Staf Divisi & Anggota Biasa</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Database Section: Table & Controls -->
+        <section class="database-section">
+            
+            <!-- Table Controls Toolbar -->
+            <div class="table-toolbar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input 
+                        type="text" 
+                        id="tableSearchInput" 
+                        placeholder="Cari Nama, NIM, Jabatan, Golongan, atau Nomor AB..." 
+                        autocomplete="off"
+                    >
+                    <button id="btnClearSearch" class="btn-clear" style="display: none;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-actions">
+                    <div class="select-filter">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <select id="golonganFilter">
+                            <option value="all">Semua Golongan</option>
+                            <option value="Golongan I (Pengurus Inti)">Golongan I (Pengurus Inti)</option>
+                            <option value="Golongan II (Ketua Divisi)">Golongan II (Ketua Divisi)</option>
+                            <option value="Golongan III (Staf Divisi)">Golongan III (Staf Divisi)</option>
+                            <option value="Golongan IV (Anggota Biasa)">Golongan IV (Anggota Biasa)</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="exportTableToCsv()" title="Unduh CSV">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>Ekspor CSV</span>
+                    </button>
+
+                    {% if anggota %}
+                    <form action="{{ url_for('reset_anggota') }}" method="POST" style="display: inline;" onsubmit="return confirm('Apakah Anda yakin ingin MENGOSONGKAN seluruh data Main Database untuk input SK baru?');">
+                        <button type="submit" class="btn btn-secondary text-danger" title="Kosongkan database">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Kosongkan DB</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Anggota Table -->
+            <div class="table-responsive">
+                <table class="main-table" id="anggotaTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 55px;" class="text-center">No</th>
+                            <th>Nama Lengkap</th>
+                            <th>NIM</th>
+                            <th>Jabatan di SK</th>
+                            <th>Golongan</th>
+                            <th>Nomor AB</th>
+                            <th>No. SK</th>
+                            <th style="width: 120px;" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="anggotaTableBody">
+                        {% if anggota %}
+                            {% for a in anggota %}
+                                <tr data-id="{{ a.id }}" data-nama="{{ a.nama }}" data-nim="{{ a.nim }}" data-jabatan="{{ a.jabatan }}" data-golongan="{{ a.golongan }}" data-nomor-ab="{{ a.nomor_ab }}" data-no-sk="{{ a.no_sk }}">
+                                    <td class="text-center row-number" style="color: var(--text-muted); font-size: 0.8rem;">{{ loop.index }}</td>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="avatar-sm">{{ a.nama[0] | upper }}</div>
+                                            <span class="user-full-name">{{ a.nama }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge-nim">{{ a.nim }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-jabatan">{{ a.jabatan }}</span>
+                                    </td>
+                                    <td>
+                                        {% if 'Golongan I' in a.golongan %}
+                                            <span class="badge-golongan gol-1">
+                                                <i class="fa-solid fa-crown"></i> {{ a.golongan }}
+                                            </span>
+                                        {% elif 'Golongan II' in a.golongan %}
+                                            <span class="badge-golongan gol-2">
+                                                <i class="fa-solid fa-chess-knight"></i> {{ a.golongan }}
+                                            </span>
+                                        {% elif 'Golongan III' in a.golongan %}
+                                            <span class="badge-golongan gol-3">
+                                                <i class="fa-solid fa-user-gear"></i> {{ a.golongan }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge-golongan gol-4">
+                                                <i class="fa-solid fa-user-tag"></i> {{ a.golongan }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge-nomor-ab">
+                                            <i class="fa-solid fa-hashtag"></i> {{ a.nomor_ab }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge-sk">
+                                            <i class="fa-regular fa-file-lines"></i> {{ a.no_sk or 'SK-HME' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="action-buttons">
+                                            <button 
+                                                class="btn-action edit" 
+                                                title="Edit Data"
+                                                onclick="openEditModal({{ a.id }}, '{{ a.nama }}', '{{ a.nim }}', '{{ a.jabatan }}', '{{ a.golongan }}', '{{ a.nomor_ab }}', '{{ a.no_sk }}')"
+                                            >
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </button>
+                                            <form action="{{ url_for('delete_anggota', id=a.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus data pengurus {{ a.nama }} dari Main Database?');">
+                                                <button type="submit" class="btn-action delete" title="Hapus Data">
+                                                    <i class="fa-regular fa-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr id="noDataRow">
+                                <td colspan="8" class="text-center empty-state-cell">
+                                    <div class="empty-state">
+                                        <div class="empty-icon-wrap">
+                                            <i class="fa-solid fa-file-circle-plus"></i>
+                                        </div>
+                                        <h3>Main Database Masih Kosong</h3>
+                                        <p>Silakan upload berkas <strong>PDF SK Pengurus</strong> pada form di atas atau klik tombol <strong>"Input Pengurus Manual"</strong> untuk mulai memasukkan data dari depan.</p>
+                                        <div class="empty-actions">
+                                            <a href="{{ url_for('download_sample_sk') }}" class="btn btn-secondary btn-sm">
+                                                <i class="fa-solid fa-file-pdf"></i> Unduh File SK Contoh
+                                            </a>
+                                            <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+                                                <i class="fa-solid fa-user-plus"></i> Input Manual
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table Footer Indicator -->
+            <div class="table-footer">
+                <span id="rowCountInfo">Menampilkan {{ anggota|length }} data pengurus HME</span>
+                <span class="db-source-tag"><i class="fa-solid fa-database"></i> SQLite: schema.sql &bull; table: anggota (Nama, NIM, Jabatan, Golongan, Nomor AB, No. SK)</span>
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- Modal: Tambah / Edit Pengurus Manual -->
+<div class="modal-backdrop" id="anggotaModal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 id="modalTitle"><i class="fa-solid fa-user-plus"></i> Input Pengurus ke Main Database</h3>
+            <button class="btn-close-modal" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="anggotaForm" method="POST" action="{{ url_for('add_anggota') }}">
+            <div class="modal-body">
+                
+                <div class="form-field">
+                    <label for="formNama">Nama Lengkap Mahasiswa <span class="required">*</span></label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="formNama" name="nama" required placeholder="Contoh: Muhammad Rizky Pratama" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="formNim">Nomor Induk Mahasiswa (NIM) <span class="required">*</span></label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-id-card"></i>
+                        <input type="text" id="formNim" name="nim" required placeholder="Contoh: 2305867 atau 220501099" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="formJabatan">Jabatan di SK Pengurus <span class="required">*</span></label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-briefcase"></i>
+                        <input type="text" id="formJabatan" name="jabatan" required placeholder="Contoh: Ketua Divisi IPTEK, Sekretaris Umum, dll" autocomplete="off" oninput="autoSuggestGolongan(this.value)">
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="formGolongan">Golongan Pengurus <span class="required">*</span></label>
+                    <div class="input-icon-wrap select-wrap">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <select id="formGolongan" name="golongan" required>
+                            <option value="auto">Otomatis Berdasarkan Jabatan</option>
+                            <option value="Golongan I (Pengurus Inti)">Golongan I (Pengurus Inti - Kahim/Wakahim/BPH)</option>
+                            <option value="Golongan II (Ketua Divisi)">Golongan II (Ketua Divisi / Kadiv)</option>
+                            <option value="Golongan III (Staf Divisi)">Golongan III (Staf Divisi / Anggota Divisi)</option>
+                            <option value="Golongan IV (Anggota Biasa)">Golongan IV (Anggota Biasa)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label for="formNomorAb">Nomor AB (Anggota Biasa) <span class="required">*</span></label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-solid fa-hashtag"></i>
+                            <input type="text" id="formNomorAb" name="nomor_ab" required placeholder="Contoh: AB-HME-23-045" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="formNoSk">Nomor SK Pengurus</label>
+                        <div class="input-icon-wrap">
+                            <i class="fa-regular fa-file-lines"></i>
+                            <input type="text" id="formNoSk" name="no_sk" placeholder="SK-HME-2026/01" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmitForm">
+                    <i class="fa-solid fa-check"></i> Simpan ke Database
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Dropzone and File Picker for SK Upload
+const skDropzone = document.getElementById('skDropzone');
+const skFileInput = document.getElementById('skFileInput');
+const btnBrowseSk = document.getElementById('btnBrowseSk');
+const selectedFileName = document.getElementById('selectedFileName');
+
+btnBrowseSk.addEventListener('click', (e) => {
+    e.stopPropagation();
+    skFileInput.click();
+});
+skDropzone.addEventListener('click', () => {
+    skFileInput.click();
+});
+skFileInput.addEventListener('change', () => {
+    if (skFileInput.files && skFileInput.files[0]) {
+        selectedFileName.innerHTML = `<span style="color: var(--brand-blue);"><i class="fa-solid fa-file-pdf"></i> ${skFileInput.files[0].name}</span> (${(skFileInput.files[0].size/1024).toFixed(1)} KB)`;
+    }
+});
+
+// Drag and drop events
+['dragenter', 'dragover'].forEach(eventName => {
+    skDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        skDropzone.classList.add('drag-over');
+    });
+});
+['dragleave', 'drop'].forEach(eventName => {
+    skDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        skDropzone.classList.remove('drag-over');
+    });
+});
+skDropzone.addEventListener('drop', (e) => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        skFileInput.files = e.dataTransfer.files;
+        selectedFileName.innerHTML = `<span style="color: var(--brand-blue);"><i class="fa-solid fa-file-pdf"></i> ${e.dataTransfer.files[0].name}</span>`;
+    }
+});
+
+// Modal Logic
+function openAddModal() {
+    document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Input Pengurus ke Main Database';
+    document.getElementById('anggotaForm').action = "{{ url_for('add_anggota') }}";
+    document.getElementById('formNama').value = '';
+    document.getElementById('formNim').value = '';
+    document.getElementById('formJabatan').value = '';
+    document.getElementById('formGolongan').value = 'auto';
+    document.getElementById('formNomorAb').value = '';
+    document.getElementById('formNoSk').value = 'SK-HME-2026/01';
+    document.getElementById('btnSubmitForm').innerHTML = '<i class="fa-solid fa-check"></i> Simpan ke Database';
+    document.getElementById('anggotaModal').style.display = 'flex';
+    document.getElementById('formNama').focus();
+}
+
+function openEditModal(id, nama, nim, jabatan, golongan, nomorAb, noSk) {
+    document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Edit Data Pengurus';
+    document.getElementById('anggotaForm').action = "/anggota/edit/" + id;
+    document.getElementById('formNama').value = nama;
+    document.getElementById('formNim').value = nim;
+    document.getElementById('formJabatan').value = jabatan;
+    document.getElementById('formGolongan').value = golongan || 'auto';
+    document.getElementById('formNomorAb').value = nomorAb;
+    document.getElementById('formNoSk').value = noSk || 'SK-HME-2026/01';
+    document.getElementById('btnSubmitForm').innerHTML = '<i class="fa-solid fa-check"></i> Perbarui Data';
+    document.getElementById('anggotaModal').style.display = 'flex';
+    document.getElementById('formNama').focus();
+}
+
+function closeModal() {
+    document.getElementById('anggotaModal').style.display = 'none';
+}
+
+function autoSuggestGolongan(val) {
+    const v = val.toLowerCase();
+    const select = document.getElementById('formGolongan');
+    if (!v) return;
+
+    if (v.includes('ketua himpunan') || v.includes('wakil ketua') || v.includes('sekretaris') || v.includes('bendahara') || v.includes('kahim')) {
+        select.value = 'Golongan I (Pengurus Inti)';
+    } else if (v.includes('ketua divisi') || v.includes('kadiv') || v.includes('kepala') || v.includes('koordinator')) {
+        select.value = 'Golongan II (Ketua Divisi)';
+    } else if (v.includes('staf') || v.includes('divisi') || v.includes('anggota divisi')) {
+        select.value = 'Golongan III (Staf Divisi)';
+    }
+}
+
+// Live Search & Golongan Filter
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('tableSearchInput');
+    const clearBtn = document.getElementById('btnClearSearch');
+    const golonganFilter = document.getElementById('golonganFilter');
+    const tableRows = document.querySelectorAll('#anggotaTableBody tr[data-id]');
+    const countInfo = document.getElementById('rowCountInfo');
+
+    function filterTable() {
+        const query = searchInput.value.toLowerCase().trim();
+        const selectedGolongan = golonganFilter.value;
+        let visibleCount = 0;
+
+        clearBtn.style.display = query ? 'block' : 'none';
+
+        tableRows.forEach(row => {
+            const nama = (row.getAttribute('data-nama') || '').toLowerCase();
+            const nim = (row.getAttribute('data-nim') || '').toLowerCase();
+            const jabatan = (row.getAttribute('data-jabatan') || '').toLowerCase();
+            const golongan = row.getAttribute('data-golongan') || '';
+            const nomorAb = (row.getAttribute('data-nomor-ab') || '').toLowerCase();
+            const noSk = (row.getAttribute('data-no-sk') || '').toLowerCase();
+
+            const matchesQuery = !query || 
+                nama.includes(query) || 
+                nim.includes(query) || 
+                jabatan.includes(query) || 
+                golongan.toLowerCase().includes(query) || 
+                nomorAb.includes(query) || 
+                noSk.includes(query);
+
+            const matchesGolongan = selectedGolongan === 'all' || golongan === selectedGolongan;
+
+            if (matchesQuery && matchesGolongan) {
+                row.style.display = '';
+                visibleCount++;
+                row.querySelector('.row-number').textContent = visibleCount;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        countInfo.textContent = `Menampilkan ${visibleCount} dari ${tableRows.length} data pengurus HME`;
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    golonganFilter.addEventListener('change', filterTable);
+    clearBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        filterTable();
+        searchInput.focus();
+    });
+});
+
+// CSV Export
+function exportTableToCsv() {
+    const rows = document.querySelectorAll('#anggotaTableBody tr[data-id]');
+    if (!rows.length) return alert('Tidak ada data.');
+
+    const headers = ['No', 'Nama Lengkap', 'NIM', 'Jabatan', 'Golongan', 'Nomor AB', 'No. SK'];
+    const csvRows = [headers.join(',')];
+
+    let no = 1;
+    rows.forEach(r => {
+        if (r.style.display !== 'none') {
+            const nama = `"${r.getAttribute('data-nama').replace(/"/g, '""')}"`;
+            const nim = `"${r.getAttribute('data-nim').replace(/"/g, '""')}"`;
+            const jabatan = `"${r.getAttribute('data-jabatan').replace(/"/g, '""')}"`;
+            const golongan = `"${r.getAttribute('data-golongan').replace(/"/g, '""')}"`;
+            const nomorAb = `"${r.getAttribute('data-nomor-ab').replace(/"/g, '""')}"`;
+            const noSk = `"${(r.getAttribute('data-no-sk') || '').replace(/"/g, '""')}"`;
+            csvRows.push([no++, nama, nim, jabatan, golongan, nomorAb, noSk].join(','));
+        }
+    });
+
+    const csvContent = '\uFEFF' + csvRows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `main_database_sk_hme_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}
